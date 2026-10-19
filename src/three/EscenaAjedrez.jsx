@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { parseFen } from '../utils/fen.js';
+import { casillaReyEnJaque } from '../utils/jaque.js';
 import {
   seleccionar,
   deseleccionar,
@@ -19,10 +20,11 @@ const COLUMNAS = 'abcdefgh';
 const CASILLAS = COLUMNAS.split('').flatMap((columna) => [1, 2, 3, 4, 5, 6, 7, 8].map((fila) => columna + fila));
 
 export default function EscenaAjedrez() {
-  const { id, fen, finalizada, cargando, legales, seleccion, promoverDe, perspectiva } = useSelector((s) => s.partida);
+  const { id, fen, finalizada, enJaque, cargando, legales, seleccion, promoverDe, perspectiva } = useSelector((s) => s.partida);
   const despachar = useDispatch();
 
   const piezas = useMemo(() => (fen ? parseFen(fen) : []), [fen]);
+  const reyEnJaque = useMemo(() => casillaReyEnJaque(fen, enJaque), [fen, enJaque]);
   const destinos = useMemo(
     () => (seleccion ? legales.filter((m) => m.desde === seleccion) : []),
     [seleccion, legales],
@@ -58,7 +60,7 @@ export default function EscenaAjedrez() {
       <CamaraAnimada perspectiva={perspectiva} />
       <group>
         {CASILLAS.map((casilla) => (
-          <Casilla key={casilla} casilla={casilla} seleccionada={casilla === seleccion} onClick={alHacerClick} />
+          <Casilla key={casilla} casilla={casilla} seleccionada={casilla === seleccion} enJaque={casilla === reyEnJaque} onClick={alHacerClick} />
         ))}
         {piezas.map((pieza) => (
           <Pieza key={pieza.id} pieza={pieza} />
