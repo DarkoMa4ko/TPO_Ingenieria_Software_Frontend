@@ -9,3 +9,8 @@
 .resultado-dialogo p{font-size:15px;line-height:1.6;color:#ced7cd;margin:0 0 25px}
 .resultado-botones{display:grid;gap:10px}
 .resultado-botones button{width:100%;min-height:46px}
+.mensaje-validacion{display: block; color: #f2a6a6; font-size: 0.8rem; margin-top: 6px;} /*mensaje de error al introducir los nombres*/
+
+/*Borde rojo cuando falta el nombre*/
+.form-inicio input[aria-invalid  ="true"]{border-color: #e58b8b;}
+.form-inicio .mensaje-validacion{color: #f2a6a6;}

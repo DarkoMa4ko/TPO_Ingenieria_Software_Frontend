@@ -15,6 +15,7 @@ export default function App() {
   const [pantalla, setPantalla] = useState('inicio');
   const [blanco, setBlanco] = useState('');
   const [negro, setNegro] = useState('');
+  const [validacionIntentada, setValidacionIntentada] = useState(false);
   const [sonido, setSonido] = useState(() => localStorage.getItem('ajedrez-sonido') !== 'off');
   const anterior = useRef({ id: null, cantidad: 0, finalizada: false });
   const [resultadoOcultoPara, setResultadoOcultoPara] = useState(null);
@@ -49,10 +50,31 @@ export default function App() {
   }
 
   function comenzar(e) {
+      // Evita que se recargue la página al enviar el formulario
     e.preventDefault();
-    despachar(crearPartida({ blanco: blanco.trim(), negro: negro.trim() })).unwrap()
-      .then(() => { setResultadoOcultoPara(null); setPantalla('partida'); })
-      .catch(() => {});
+    // Activa la validación de los campos
+    setValidacionIntentada(true);
+    // Elimina los espacios al principio y al final de los nombres
+    const nombreBlanco = blanco.trim();
+    const nombreNegro = negro.trim();
+
+    // Si alguno de los nombres está vacío, no deja crear la partida
+    if (!nombreBlanco || !nombreNegro){
+        return;
+    }
+
+    //Envía los nombres al backend para crear la partida
+    despachar(crearPartida({
+        blanco: nombreBlanco,
+        negro: nombreNegro })).unwrap()
+      .then(() => {
+          // Si se crea correctamente, se muestra el tablero
+          setResultadoOcultoPara(null);
+          setPantalla('partida');
+          setValidacionIntentada(false);})
+      .catch(() => {
+          // Si falla la creación, no cambia la pantalla
+          });
   }
   function alternarSonido() {
     localStorage.setItem('ajedrez-sonido', sonido ? 'off' : 'on');
@@ -79,8 +101,21 @@ export default function App() {
             <form className="form-inicio" onSubmit={comenzar}>
               <h2>Crear nueva partida</h2>
               <div className="campos-jugadores">
-                <label><span>♔ Jugador de blancas</span><input value={blanco} onChange={e => setBlanco(e.target.value)} maxLength={60} placeholder="Nombre del jugador" /></label>
-                <label><span>♚ Jugador de negras</span><input value={negro} onChange={e => setNegro(e.target.value)} maxLength={60} placeholder="Nombre del jugador" /></label>
+                <label><span>♔ Jugador de blancas</span>
+                       <input value={blanco} onChange={e => setBlanco(e.target.value)} maxLength={60} placeholder="Nombre del jugador" aria-invalid={validacionIntentada && !blanco.trim()}/>
+                       {/*Muestra el mensaje si el nombre está vacío */}
+                       {validacionIntentada && !blanco.trim() && (
+                            <span className="mensaje-validacion">Introduce el nombre del jugador de blancas.</span>
+                       )}
+                </label>
+                <label>
+                    <span>♚ Jugador de negras</span>
+                    <input value={negro} onChange={e => setNegro(e.target.value)} maxLength={60} placeholder="Nombre del jugador"aria-invalid={validacionIntentada && !blanco.trim()} />
+                    {/*Muestra el mensaje si el nombre está vacío */}
+                    {validacionIntentada && !blanco.trim() && (
+                            <span className="mensaje-validacion">Introduce el nombre del jugador de negras.</span>
+                    )}
+                </label>
               </div>
               <button type="submit" className="principal grande" disabled={cargando}>{cargando ? 'Creando partida…' : 'Comenzar partida →'}</button>
               {id && <button type="button" className="secundario" onClick={() => setPantalla('partida')}>Continuar partida actual</button>}
