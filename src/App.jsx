@@ -10,7 +10,7 @@ import { reproducirSonido } from './utils/sonidos.js';
 import { hayJaqueEnFen } from './utils/jaque.js';
 
 export default function App() {
-  const { id, fen, jugadas, enJaque, finalizada, resultado, cargando, error } = useSelector((s) => s.partida);
+  const { id, fen, jugadas, enJaque, finalizada, resultado,rendicionInfo, cargando, error } = useSelector((s) => s.partida);
   const despachar = useDispatch();
   const [pantalla, setPantalla] = useState('inicio');
   const [blanco, setBlanco] = useState('');
@@ -110,16 +110,19 @@ export default function App() {
                 </label>
                 <label>
                     <span>♚ Jugador de negras</span>
-                    <input value={negro} onChange={e => setNegro(e.target.value)} maxLength={60} placeholder="Nombre del jugador"aria-invalid={validacionIntentada && !blanco.trim()} />
+                    <input value={negro} onChange={e => setNegro(e.target.value)} maxLength={60} placeholder="Nombre del jugador"aria-invalid={validacionIntentada && !negro.trim()} />
                     {/*Muestra el mensaje si el nombre está vacío */}
-                    {validacionIntentada && !blanco.trim() && (
+                    {validacionIntentada && !negro.trim() && (
                             <span className="mensaje-validacion">Introduce el nombre del jugador de negras.</span>
                     )}
                 </label>
               </div>
               <button type="submit" className="principal grande" disabled={cargando}>{cargando ? 'Creando partida…' : 'Comenzar partida →'}</button>
               {id && <button type="button" className="secundario" onClick={() => setPantalla('partida')}>Continuar partida actual</button>}
-              {error && <p className="error" role="alert">{error}</p>}
+              {error && <div className="error" role="alert">{<strong>¡UPS! No hemos podido iniciar la partida</strong>}
+                            <p>Parece que no podemos conectar con el servidor.
+                               Inténtalo de nuevo en unos minutos</p>
+                        </div>}
             </form>
           </div>
           <div className="bienvenida-decoracion" aria-hidden="true"><span>♚</span><span>♞</span><span>♜</span></div>
@@ -135,7 +138,7 @@ export default function App() {
       )}
       <ModalPromocion />
       {pantalla === 'partida' && finalizada && id !== resultadoOcultoPara && (
-        <ModalResultado resultado={resultado} onCerrar={cerrarResultado} onNueva={nuevaPartida} />
+        <ModalResultado resultado={resultado} rendicionInfo = {rendicionInfo} onCerrar={cerrarResultado} onNueva={nuevaPartida} />
       )}
     </div>
   );

@@ -10,23 +10,97 @@ export default function PanelPartida() {
   const [blanco, setBlanco] = useState('');
   const [negro, setNegro] = useState('');
 
+  /*Controla si se muestra la confirmación para reiniciar*/
+  const [confirmarReinicio, setConfirmarReinicio] = useState(false);
+
+  //Controla si aparece la confirmación para rendirse
+  const [confirmarRendicion, setConfirmarRendicion] = useState(false);
+
   return (
     <div className="panel">
-      <h1>♞ Ajedrez 3D</h1>
-      <span className="subtitulo">TPO Ingeniería de Software — UADE</span>
       {!id && (
         <div className="nombres">
           <input placeholder="Jugador blancas" value={blanco} onChange={(e) => setBlanco(e.target.value)} />
           <input placeholder="Jugador negras" value={negro} onChange={(e) => setNegro(e.target.value)} />
         </div>
       )}
-      <button className="principal" onClick={() => despachar(crearPartida({ blanco, negro }))} disabled={cargando}>
-        {!id ? 'Nueva partida' : 'Reiniciar partida'}
-      </button>
-      {id && !finalizada && (
-        <button className="secundario" onClick={() => despachar(rendirse(id))} disabled={cargando}>
-          Rendirse
-        </button>
+    {/*Botones de control de la partida*/}
+    {id && (
+      <div className="acciones-partida">
+          <button className="principal boton-reiniciar" onClick={() => setConfirmarReinicio(true)} disabled={cargando}>
+              Reiniciar partida
+          </button>
+          {!finalizada && (
+              <button className="secundario" onClick={() => setConfirmarRendicion(true)} disabled ={cargando}>
+                  Rendirse
+              </button>
+          )}
+      </div>
+    )}
+      {/*Ventana para confirmar el reinicio */}
+      {confirmarReinicio && (
+        <div className ="modal-fondo">
+            <div className ="modal">
+                <h2>¿Reiniciar partida?</h2>
+                <p>
+                    Se perderán las jugadas de la partida actual.{' '}
+                    ¿Seguro que quieres empezar de nuevo?
+                </p>
+
+                <div className="opciones">
+                    {/*Cierra la ventana sin reiniciar*/}
+                    <button className="secundario" onClick={() => setConfirmarReinicio(false)}>
+                        Cancelar
+                    </button>
+                    {/* Reinicia manteniendo los nombres de los jugadores */}
+                    <button className="principal" disabled ={cargando} onClick={async () => {try { await despachar(crearPartida
+                        ({blanco: jugadores?.blanco || `Blancas`, negro: jugadores?.negro || `Negras`})).unwrap();
+                            setConfirmarReinicio(false);
+                        } catch {
+                            //Si falla, no se cierra la ventana
+                        }
+                        }}
+                    >
+                        Sí, reiniciar
+                    </button>
+                </div>
+            </div>
+        </div>
+      )}
+
+
+
+
+      {/*ventana de confirmación para rendirse */}
+      {confirmarRendicion && (
+        <div className="modal-fondo">
+            <div className="modal">
+                <h2> ¿Seguro que quieres rendirte?</h2>
+                <p>
+                    Si te rindes, la partida terminará y{' '}
+                    tu rival será declarado ganador.
+                </p>
+
+                <div className="opciones">
+                    {/* Volver a la partida */}
+                    <button className="secundario" onClick={() => setConfirmarRendicion(false)}>
+                        Cancelar
+                    </button>
+
+                    {/*Confirmar la rendición*/}
+                    <button className="principal" disabled={cargando} onClick={async () => {try{
+                        await despachar(rendirse(id)).unwrap(); setConfirmarRendicion(false);
+                        } catch {
+                            //Si falla, mantenemos la ventana abierta
+                        }
+                    }}
+                >
+                    Sí, rendirse
+                </button>
+            </div>
+        </div>
+      </div>
+
       )}
       <div className="perspectivas">
         <span className="etiqueta">Cámara</span>
@@ -40,22 +114,45 @@ export default function PanelPartida() {
           </button>
         ))}
       </div>
+      {/* Información de la partida y de los jugadores */}
       {id && (
         <div className="estado">
+            {/* Muestra a quién le toca mover*/}
           <p className="turno">
-            Turno: <strong>{turno === 'w' ? 'Blancas' : 'Negras'}</strong>
-            {enJaque && <span className="jaque"> ¡Jaque!</span>}
+              {finalizada ? (
+                <strong>Partida finalizada </strong>
+                ) : (
+                    <>
+                       <strong>Turno: </strong>
+                       <span className="color-turno">{turno === 'w' ? 'Blancas' : 'Negras'}</span>
+                       {enJaque && <span className="jaque"> ¡Jaque!</span>}
+                    </>
+                )}
           </p>
-          {jugadores?.blanco || jugadores?.negro ? (
-            <p className="jugadores">
-              {jugadores.blanco || 'Blancas'} vs {jugadores.negro || 'Negras'}
-            </p>
-          ) : null}
+          {/* Tarjeta de los jugadores */}
+          <div className = "tarjetas-jugadores">
+              {/* Jugador de blancas */}
+              <div className={`tarjeta-jugador ${turno === 'w' && !finalizada ? 'jugador-activo' : ''}`}>
+                  <span className ="tipo-jugador"> ♔ PIEZAS BLANCAS</span>
+                  <strong>{jugadores?.blanco || 'Blancas'}</strong>
+                  {turno === 'w' && !finalizada && (
+                      <span className="indicador-turno"> ● Su turno</span>
+                  )}
+              </div>
+              {/*Jugador de negras */}
+              <div className={`tarjeta-jugador ${turno === 'b' && !finalizada ? 'jugador-activo' : ''}`}>
+                  <span className ="tipo-jugador"> ♚ PIEZAS NEGRAS</span>
+                  <strong>{jugadores?.negro || 'Negras'}</strong>
+                  {turno === 'b' && !finalizada && (
+                      <span className="indicador-turno"> ● Su turno</span>
+                  )}
+              </div>
+          </div>
         </div>
       )}
       {finalizada && (
         <div className="fin">
-          <p>🏁 Partida finalizada</p>
+          <p>🏁 Estado de la partida</p>
           {resultado && <p className="resultado">{resultado}</p>}
         </div>
       )}

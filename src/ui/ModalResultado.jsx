@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-export default function ModalResultado({ resultado, onCerrar, onNueva }) {
+export default function ModalResultado({ resultado,rendicionInfo, onCerrar, onNueva }) {
   const cerrarRef = useRef(null);
   useEffect(() => {
     cerrarRef.current?.focus();
@@ -16,8 +16,8 @@ export default function ModalResultado({ resultado, onCerrar, onNueva }) {
       <section className="resultado-dialogo" role="dialog" aria-modal="true" aria-labelledby="resultado-titulo" aria-describedby="resultado-descripcion">
         <div className="resultado-emblema" aria-hidden="true">{tablas ? '½–½' : mate ? '♛' : '♜'}</div>
         <div className="resultado-etiqueta">PARTIDA FINALIZADA</div>
-        <h2 id="resultado-titulo">{tablas ? '¡La partida termina en tablas!' : mate ? '¡Jaque mate!' : 'Fin de la partida'}</h2>
-        <p id="resultado-descripcion">{resultado || 'La partida ha terminado.'}</p>
+        <h2 id="resultado-titulo">{rendicionInfo && /rendici/i.test(resultado || '') ? `¡${rendicionInfo.ganador} ha ganado!` : tablas ? '¡La partida termina en tablas!' : mate ? '¡Jaque mate!' : '¡Fin de la partida'}</h2>
+        <p id="resultado-descripcion">{rendicionInfo && /rendici/i.test(resultado || '') ? `${rendicionInfo.perdedor} se ha rendido.` : resultado || 'La partida ha terminado.'}</p>
         <div className="resultado-botones">
           <button className="principal" onClick={onNueva}>＋ Nueva partida</button>
           <button className="secundario" ref={cerrarRef} onClick={onCerrar}>Ver tablero e historial</button>

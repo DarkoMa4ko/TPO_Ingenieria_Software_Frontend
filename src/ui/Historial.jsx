@@ -9,8 +9,12 @@ export default function Historial({ jugadas = [] }) {
           {pares(jugadas).map(([blanca, negra, indice]) => (
             <li key={indice}>
               <span className="numero">{indice + 1}.</span>
-              <span className="item">{blanca ? blanca.notacion : '—'}</span>
-              <span className="item">{negra ? negra.notacion : ''}</span>
+              <span className={`item ${blanca && indice * 2 ===jugadas.length - 1 ? 'ultima-jugada' : ''} ` }>
+                {blanca ? blanca.notacion : '-'}
+              </span>
+              <span className={`item ${negra && indice * 2 + 1===jugadas.length - 1 ? 'ultima-jugada' : ''} ` }>
+                {negra ? negra.notacion : ''}
+              </span>
             </li>
           ))}
         </ol>
