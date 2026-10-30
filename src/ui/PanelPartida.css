@@ -1,0 +1,80 @@
+/* Estilos del panel lateral de la partida en curso. */
+.subtitulo {
+  display: block;
+  color: #fcfcfc;
+  font-size: 17px;
+  margin-bottom: 12px;
+}
+
+.estado {
+  margin-top: 17px;
+  padding: 14px;
+  border-radius: 11px;
+  background: #111b16;
+  border: 1px solid #344438;
+}
+
+.estado span,
+.estado small {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  color: #96a79a;
+}
+
+.estado strong {
+  display: block;
+  margin: 7px 0;
+  font-size: 17px;
+  color: #ead7ae;
+}
+
+.perspectivas {
+  margin-top: 18px;
+}
+
+.etiqueta {
+  display: block;
+  color: #eef3ef;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.grupo-camaras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.grupo-camaras button {
+  padding: 7px 10px;
+  font-size: 14px;
+}
+
+.grupo-camaras button.activo {
+  background: #65573d;
+  border-color: #c3a776;
+  color: #fff1d1;
+}
+
+.acciones-partida {
+  margin-top: 20px;
+  display: grid;
+  gap: 8px;
+}
+
+.fin {
+  border: 1px solid #ae8a58;
+  padding: 13px;
+  margin-top: 12px;
+  border-radius: 9px;
+  background: #342c20;
+}
+
+.resultado {
+  margin: 5px 0 0;
+  color: #decfba;
+  font-size: 13px;
+}

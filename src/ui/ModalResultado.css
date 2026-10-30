@@ -1,0 +1,64 @@
+/* Modal de fin de partida: cubre el tablero sin alterar su renderizado 3D. */
+.resultado-superposicion {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(7, 13, 10, 0.76);
+  backdrop-filter: blur(5px);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.resultado-dialogo {
+  width: min(100%, 430px);
+  background: linear-gradient(150deg, #28352b, #17211c);
+  border: 1px solid #aa956e;
+  box-shadow: 0 28px 90px #0009;
+  border-radius: 20px;
+  padding: 34px 27px;
+  text-align: center;
+}
+
+.resultado-emblema {
+  margin: 0 auto 15px;
+  width: 83px;
+  height: 83px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #3b4030;
+  color: #ebcf92;
+  font-size: 39px;
+  border: 1px solid #786b4b;
+}
+
+.resultado-etiqueta {
+  font-size: 11px;
+  color: #c8aa73;
+  font-weight: 800;
+  letter-spacing: 0.19em;
+}
+
+.resultado-dialogo h2 {
+  font-size: clamp(24px, 4vw, 31px);
+  margin: 13px 0;
+  color: #fff0d2;
+}
+
+.resultado-dialogo p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #ced7cd;
+  margin: 0 0 25px;
+}
+
+.resultado-botones {
+  display: grid;
+  gap: 10px;
+}
+
+.resultado-botones button {
+  width: 100%;
+  min-height: 46px;
+}

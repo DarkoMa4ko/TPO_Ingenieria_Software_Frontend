@@ -58,6 +58,7 @@ const estadoInicial = {
   error: null,
   promoverDe: null,
   perspectiva: 'blancas',
+  sincCamara: 0,
 };
 
 function aplicarPartida(state, detalle) {
@@ -88,6 +89,7 @@ const slice = createSlice({
     },
     cambiarPerspectiva(state, { payload }) {
       state.perspectiva = PERSPECTIVAS[payload] ? payload : state.perspectiva;
+      state.sincCamara += 1;
     },
   },
   extraReducers: (builder) => {

@@ -1,0 +1,89 @@
+/* Estilos del historial de jugadas. */
+.panel-encabezado,
+.historial-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.historial {
+  background: #202a23;
+  border: 1px solid #36443a;
+  padding: 15px;
+  border-radius: 12px;
+}
+
+.historial-titulo {
+  margin-bottom: 14px;
+}
+
+.historial h2 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.historial-titulo > span {
+  background: #425044;
+  border-radius: 6px;
+  padding: 2px 9px;
+  font-size: 12px;
+}
+
+.historial-columnas,
+.historial li {
+  display: grid;
+  grid-template-columns: 60px 1fr 1fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.historial-columnas {
+  font-size: 9px;
+  color: #93a394;
+  letter-spacing: 0.08em;
+  padding: 8px;
+  border-bottom: 1px solid #485548;
+}
+
+.historial ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.historial li {
+  padding: 10px 8px;
+  font-size: 13px;
+  border-bottom: 1px solid #344037;
+}
+
+.historial li:nth-child(odd) {
+  background: #253128;
+}
+
+.historial .numero {
+  color: #a5b3a5;
+}
+
+.historial .fin-lista {
+  height: 0;
+  padding: 0;
+  border: 0;
+}
+
+.vacio {
+  text-align: center;
+  color: #a4afa5;
+  padding: 24px 12px;
+  font-size: 28px;
+}
+
+.vacio p {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 7px 0;
+}

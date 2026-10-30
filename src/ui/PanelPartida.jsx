@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { crearPartida, rendirse, cambiarPerspectiva } from '../store/partidaSlice.js';
 import { PERSPECTIVAS } from './perspectivas.js';
+import './PanelPartida.css';
 
 export default function PanelPartida() {
   const { id, jugadores, finalizada, resultado, enJaque, turno, cargando, error, perspectiva } =
@@ -30,15 +31,17 @@ export default function PanelPartida() {
       )}
       <div className="perspectivas">
         <span className="etiqueta">Cámara</span>
-        {Object.entries(PERSPECTIVAS).map(([clave, { etiqueta }]) => (
-          <button
-            key={clave}
-            className={perspectiva === clave ? 'activo' : ''}
-            onClick={() => despachar(cambiarPerspectiva(clave))}
-          >
-            {etiqueta.replace('Vista ', '')}
-          </button>
-        ))}
+        <div className="grupo-camaras">
+          {Object.entries(PERSPECTIVAS).map(([clave, { etiqueta }]) => (
+            <button
+              key={clave}
+              className={perspectiva === clave ? 'activo' : ''}
+              onClick={() => despachar(cambiarPerspectiva(clave))}
+            >
+              {etiqueta.replace('Vista ', '')}
+            </button>
+          ))}
+        </div>
       </div>
       {id && (
         <div className="estado">

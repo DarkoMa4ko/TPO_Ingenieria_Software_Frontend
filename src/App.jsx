@@ -8,6 +8,14 @@ import ModalResultado from './ui/ModalResultado.jsx';
 import { crearPartida } from './store/partidaSlice.js';
 import { reproducirSonido } from './utils/sonidos.js';
 import { hayJaqueEnFen } from './utils/jaque.js';
+import './App.css';
+
+// Cada JugadaResponse trae el FEN de la posicion resultante; contar piezas
+// permite detectar capturas sin depender de la notacion (que no marca 'x').
+function totalPiezas(fen) {
+  const tablero = fen.split(' ')[0];
+  return (tablero.match(/[a-zA-Z]/g) || []).length;
+}
 
 export default function App() {
   const { id, fen, jugadas, enJaque, finalizada, resultado, cargando, error } = useSelector((s) => s.partida);
@@ -36,7 +44,9 @@ export default function App() {
       } else if (esJaque) {
         reproducirSonido('jaque');
       } else {
-        reproducirSonido(ultima?.captura || /x/.test(ultima?.notacion || '') ? 'captura' : 'mover');
+        const previa = jugadas[jugadas.length - 2];
+        const fueCaptura = Boolean(previa && totalPiezas(previa.fen) > totalPiezas(ultima.fen));
+        reproducirSonido(fueCaptura ? 'captura' : 'mover');
       }
     }
     anterior.current = { id, cantidad: jugadas.length, finalizada };

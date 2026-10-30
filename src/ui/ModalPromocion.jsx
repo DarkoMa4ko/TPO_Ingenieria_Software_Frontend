@@ -1,5 +1,6 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { cancelarPromocion, jugar } from '../store/partidaSlice.js';
+import './ModalPromocion.css';
 
 const OPCIONES = [
   { simbolo: 'q', etiqueta: 'Dama' },

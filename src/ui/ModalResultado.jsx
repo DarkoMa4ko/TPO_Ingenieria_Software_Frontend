@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import './ModalResultado.css';
 
 export default function ModalResultado({ resultado, onCerrar, onNueva }) {
   const cerrarRef = useRef(null);
@@ -14,12 +15,12 @@ export default function ModalResultado({ resultado, onCerrar, onNueva }) {
   return (
     <div className="resultado-superposicion" role="presentation">
       <section className="resultado-dialogo" role="dialog" aria-modal="true" aria-labelledby="resultado-titulo" aria-describedby="resultado-descripcion">
-        <div className="resultado-emblema" aria-hidden="true">{tablas ? '½–½' : mate ? '♛' : '♜'}</div>
+        <div className="resultado-emblema" aria-hidden="true">{tablas ? '♔' : mate ? '♛' : '♜'}</div>
         <div className="resultado-etiqueta">PARTIDA FINALIZADA</div>
         <h2 id="resultado-titulo">{tablas ? '¡La partida termina en tablas!' : mate ? '¡Jaque mate!' : 'Fin de la partida'}</h2>
         <p id="resultado-descripcion">{resultado || 'La partida ha terminado.'}</p>
         <div className="resultado-botones">
-          <button className="principal" onClick={onNueva}>＋ Nueva partida</button>
+          <button className="principal" onClick={onNueva}>Reiniciar partida</button>
           <button className="secundario" ref={cerrarRef} onClick={onCerrar}>Ver tablero e historial</button>
         </div>
       </section>

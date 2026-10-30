@@ -20,7 +20,7 @@ const COLUMNAS = 'abcdefgh';
 const CASILLAS = COLUMNAS.split('').flatMap((columna) => [1, 2, 3, 4, 5, 6, 7, 8].map((fila) => columna + fila));
 
 export default function EscenaAjedrez() {
-  const { id, fen, finalizada, enJaque, cargando, legales, seleccion, promoverDe, perspectiva } = useSelector((s) => s.partida);
+  const { id, fen, finalizada, enJaque, cargando, legales, seleccion, promoverDe, perspectiva, sincCamara } = useSelector((s) => s.partida);
   const despachar = useDispatch();
 
   const piezas = useMemo(() => (fen ? parseFen(fen) : []), [fen]);
@@ -57,7 +57,7 @@ export default function EscenaAjedrez() {
       <ambientLight intensity={0.65} />
       <directionalLight castShadow position={[6, 12, 7]} intensity={1.2} shadow-mapSize={[2048, 2048]} />
       <pointLight position={[-6, 6, -6]} intensity={0.35} />
-      <CamaraAnimada perspectiva={perspectiva} />
+      <CamaraAnimada perspectiva={perspectiva} sincCamara={sincCamara} />
       <group>
         {CASILLAS.map((casilla) => (
           <Casilla key={casilla} casilla={casilla} seleccionada={casilla === seleccion} enJaque={casilla === reyEnJaque} onClick={alHacerClick} />
@@ -79,6 +79,7 @@ export default function EscenaAjedrez() {
       </group>
       <ContactShadows position={[0, -0.24, 0]} opacity={0.5} scale={14} blur={2.2} far={4} />
       <OrbitControls
+        makeDefault
         target={[0, 0, 0]}
         enablePan={false}
         minDistance={4}

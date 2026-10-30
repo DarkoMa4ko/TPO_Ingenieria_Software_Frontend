@@ -1,3 +1,5 @@
+import './Historial.css';
+
 export default function Historial({ jugadas = [] }) {
   return (
     <div className="historial">
