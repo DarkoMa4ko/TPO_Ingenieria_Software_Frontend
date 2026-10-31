@@ -1,19 +1,19 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { cancelarPromocion, jugar } from '../store/partidaSlice.js';
+import { jugar, ocultarPromocion } from '../store/partidaSlice.js';
 import './ModalPromocion.css';
 
 const OPCIONES = [
-  { simbolo: 'q', etiqueta: 'Dama' },
-  { simbolo: 'r', etiqueta: 'Torre' },
-  { simbolo: 'b', etiqueta: 'Alfil' },
-  { simbolo: 'n', etiqueta: 'Caballo' },
+  { simbolo: 'q', etiqueta: 'Dama', icono: '♛' },
+  { simbolo: 'r', etiqueta: 'Torre', icono: '♜' },
+  { simbolo: 'b', etiqueta: 'Alfil', icono: '♝' },
+  { simbolo: 'n', etiqueta: 'Caballo', icono: '♞' },
 ];
 
 export default function ModalPromocion() {
-  const { id, promoverDe, cargando } = useSelector((s) => s.partida);
+  const { id, promoverDe, promocionOculta, finalizada, cargando } = useSelector((s) => s.partida);
   const despachar = useDispatch();
 
-  if (!promoverDe) return null;
+  if (!promoverDe || promocionOculta || finalizada) return null;
 
   const elegir = (simbolo) => despachar(jugar({ id, desde: promoverDe.desde, hasta: promoverDe.hasta, promocion: simbolo }));
 
@@ -22,15 +22,16 @@ export default function ModalPromocion() {
       <div className="modal">
         <h3>Elegí la pieza de promoción</h3>
         <div className="opciones">
-          {OPCIONES.map(({ simbolo, etiqueta }) => (
+          {OPCIONES.map(({ simbolo, etiqueta, icono }) => (
             <button key={simbolo} disabled={cargando} onClick={() => elegir(simbolo)}>
               {etiqueta}
+              <span className="piezas" aria-hidden="true">{icono}</span>
             </button>
           ))}
-          <button className="cancelar" disabled={cargando} onClick={() => despachar(cancelarPromocion())}>
-            Cancelar
-          </button>
         </div>
+        <button className="ver-tablero" disabled={cargando} onClick={() => despachar(ocultarPromocion())}>
+          Ver el tablero
+        </button>
       </div>
     </div>
   );

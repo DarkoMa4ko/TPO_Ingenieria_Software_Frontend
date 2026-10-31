@@ -18,7 +18,7 @@ function totalPiezas(fen) {
 }
 
 export default function App() {
-  const { id, fen, jugadas, enJaque, finalizada, resultado, cargando, error } = useSelector((s) => s.partida);
+  const { id, fen, jugadas, enJaque, finalizada, resultado, cargando, error, jugadores } = useSelector((s) => s.partida);
   const despachar = useDispatch();
   const [pantalla, setPantalla] = useState('inicio');
   const [blanco, setBlanco] = useState('');
@@ -53,6 +53,13 @@ export default function App() {
   }, [id, jugadas, enJaque, fen, finalizada, resultado]);
 
   const cerrarResultado = () => setResultadoOcultoPara(id);
+
+  // Reinicia con los mismos jugadores y sigue dentro de la partida, sin pasar por la pantalla de inicio.
+  function reiniciarPartida() {
+    despachar(crearPartida({ blanco: jugadores?.blanco || '', negro: jugadores?.negro || '' })).unwrap()
+      .then(() => { setResultadoOcultoPara(null); setPantalla('partida'); });
+  }
+
   function nuevaPartida() {
     setResultadoOcultoPara(null);
     setPantalla('inicio');
@@ -110,7 +117,7 @@ export default function App() {
       )}
       <ModalPromocion />
       {pantalla === 'partida' && finalizada && id !== resultadoOcultoPara && (
-        <ModalResultado resultado={resultado} onCerrar={cerrarResultado} onNueva={nuevaPartida} />
+        <ModalResultado resultado={resultado} onCerrar={cerrarResultado} onNueva={reiniciarPartida} />
       )}
     </div>
   );

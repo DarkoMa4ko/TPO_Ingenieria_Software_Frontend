@@ -57,6 +57,7 @@ const estadoInicial = {
   cargando: false,
   error: null,
   promoverDe: null,
+  promocionOculta: false,
   perspectiva: 'blancas',
   sincCamara: 0,
 };
@@ -67,6 +68,7 @@ function aplicarPartida(state, detalle) {
     legales: detalle.legales,
     seleccion: null,
     promoverDe: null,
+    promocionOculta: false,
   });
 }
 
@@ -83,9 +85,16 @@ const slice = createSlice({
     setearPromocion(state, { payload }) {
       state.promoverDe = payload;
       state.seleccion = null;
+      state.promocionOculta = false;
     },
     cancelarPromocion(state) {
       state.promoverDe = null;
+    },
+    ocultarPromocion(state) {
+      state.promocionOculta = true;
+    },
+    mostrarPromocion(state) {
+      state.promocionOculta = false;
     },
     cambiarPerspectiva(state, { payload }) {
       state.perspectiva = PERSPECTIVAS[payload] ? payload : state.perspectiva;
@@ -127,10 +136,12 @@ const slice = createSlice({
       .addCase(rendirse.pending, marcarCargando)      .addCase(rendirse.fulfilled, (state, { payload }) => {
         state.cargando = false;
         Object.assign(state, crearEstado(payload), { legales: [], seleccion: null });
+        state.promoverDe = null;
+        state.promocionOculta = false;
       })
       .addCase(rendirse.rejected, registrarError);
   },
 });
 
-export const { seleccionar, deseleccionar, setearPromocion, cancelarPromocion, cambiarPerspectiva } = slice.actions;
+export const { seleccionar, deseleccionar, setearPromocion, cancelarPromocion, cambiarPerspectiva, ocultarPromocion, mostrarPromocion } = slice.actions;
 export default slice.reducer;
