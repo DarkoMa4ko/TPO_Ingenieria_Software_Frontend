@@ -64,10 +64,10 @@ const tmp = new THREE.Vector3();
  *  - cinemáticas (captura / mate): plano cerrado con paneo lento y vuelta.
  * Publica el punto de enfoque para la profundidad de campo en `enfoque`.
  */
-export default function DirectorCamara({ modo, perspectiva, lado, cinematica, controlesRef, enfoque, onCinematica, panelVisible = true }) {
+export default function DirectorCamara({ modo, perspectiva, lado, sincCamara = 0, cinematica, controlesRef, enfoque, onCinematica, panelVisible = true }) {
   const { camera, size } = useThree();
   const desplazamiento = useRef({ x: 0, y: 0 });
-  const estado = useRef({ transicion: null, orbita: null, cine: null, ultimaPerspectiva: `${perspectiva}-${lado}`, modo: null });
+  const estado = useRef({ transicion: null, orbita: null, cine: null, ultimaPerspectiva: `${perspectiva}-${lado}-${sincCamara}`, modo: null });
   const onCinematicaRef = useRef(onCinematica);
   onCinematicaRef.current = onCinematica;
 
@@ -102,13 +102,15 @@ export default function DirectorCamara({ modo, perspectiva, lado, cinematica, co
   // Cambio de perspectiva elegido por el usuario.
   useEffect(() => {
     const s = estado.current;
-    const clave = `${perspectiva}-${lado}`;
+    // El contador sincCamara permite re-elegir la misma perspectiva y que la
+    // cámara re-vole a esa posición en lugar de quedarse quieta.
+    const clave = `${perspectiva}-${lado}-${sincCamara}`;
     if (s.ultimaPerspectiva === clave) return;
     s.ultimaPerspectiva = clave;
     if (modo !== 'juego' || s.cine) return;
     viajar(tomaPerspectiva(perspectiva, size.width / size.height, lado), 1.35);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [perspectiva, lado]);
+    }, [perspectiva, lado, sincCamara]);
 
   // Cinemáticas.
   useEffect(() => {

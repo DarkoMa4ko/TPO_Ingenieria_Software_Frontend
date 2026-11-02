@@ -6,7 +6,7 @@ import { IconoMas } from './Iconos.jsx';
 import Vidrio from './Vidrio.jsx';
 
 export default function ModalResultado({ onCerrar, onNueva, saliendo = false }) {
-  const { resultado, turno, jugadores, jugadas, fenInicial } = useSelector((s) => s.partida);
+  const { resultado, turno, jugadores, jugadas, fenInicial, marcador } = useSelector((s) => s.partida);
   const cerrarRef = useRef(null);
   useEffect(() => {
     cerrarRef.current?.focus();
@@ -21,6 +21,14 @@ export default function ModalResultado({ onCerrar, onNueva, saliendo = false }) 
   const nombreGanador = gana === 'w' ? (jugadores?.blanco || 'Blancas') : (jugadores?.negro || 'Negras');
   const capturas = useMemo(() => capturasDeJugadas(jugadas, fenInicial || FEN_INICIAL), [jugadas, fenInicial]);
   const detalle = (resultado || '').split(':').pop().trim();
+  // Marcador de la sesión acumulado (tablas valen ½ para cada bando).
+  const puntos = (n) => {
+    const entero = Math.floor(n);
+    const medio = n - entero > 0;
+    return `${entero}${medio ? '½' : ''}`;
+  };
+  const scoreBlancas = puntos((marcador?.w ?? 0) + (marcador?.t ?? 0) / 2);
+  const scoreNegras = puntos((marcador?.b ?? 0) + (marcador?.t ?? 0) / 2);
 
   return (
     <div className={`resultado-superposicion ${saliendo ? 'saliendo' : ''}`} role="presentation">
@@ -37,7 +45,14 @@ export default function ModalResultado({ onCerrar, onNueva, saliendo = false }) 
         <dl className="resultado-datos">
           <div><dt>Jugadas</dt><dd>{jugadas.length}</dd></div>
           <div><dt>Capturas</dt><dd>{capturas.length}</dd></div>
-          <div><dt>Resultado</dt><dd>{tablas ? '½–½' : gana === 'w' ? '1–0' : '0–1'}</dd></div>
+          <div>
+            <dt>Marcador</dt>
+            <dd>
+              {scoreBlancas}
+              <span className="resultado-separador">–</span>
+              {scoreNegras}
+            </dd>
+          </div>
         </dl>
 
         <div className="resultado-botones">

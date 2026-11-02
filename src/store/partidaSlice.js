@@ -58,7 +58,11 @@ const estadoInicial = {
   cargando: false,
   error: null,
   promoverDe: null,
-  perspectiva: 'blancas',
+  perspectiva: 'blancas',  // Obliga a la cámara a re-volar aunque se elija la perspectiva que ya está activa.
+  sincCamara: 0,
+  // Marcador de la sesión: victorias de blancas, de negras y empates.
+  marcador: { w: 0, b: 0, t: 0 },
+  marcadorRegistrado: null,
   // El panel de la partida se puede ocultar (botón o tecla P) para ver la escena entera.
   panelOculto: false,
   // Lado desde el que se mira: la vista cenital lo respeta.
@@ -73,6 +77,26 @@ function aplicarPartida(state, detalle) {
     seleccion: null,
     promoverDe: null,
   });
+  registrarPuntaje(state, detalle.estado);
+}
+
+// Suma la partida terminada al marcador de la sesión (una sola vez por partida).
+function registrarPuntaje(state, estado) {
+  if (!estado.finalizada || !estado.resultado) return;
+  if (state.marcadorRegistrado === estado.id) return;
+  state.marcadorRegistrado = estado.id;
+  const r = estado.resultado;
+  if (/tabla|empate|ahogado|draw|stalemate/i.test(r)) {
+    state.marcador.t += 1;
+    return;
+  }
+  // La rendición llega como "Rendición", sin nombrar al ganador: gana el
+  // bando contrario al que tenía el turno (igual que `ganador()` del utils).
+  let gana;
+  if (/ganan?\s+(las\s+)?blancas/i.test(r)) gana = 'w';
+  else if (/ganan?\s+(las\s+)?negras/i.test(r)) gana = 'b';
+  else gana = estado.turno === 'w' ? 'b' : 'w';
+  state.marcador[gana] += 1;
 }
 
 const slice = createSlice({
@@ -94,6 +118,7 @@ const slice = createSlice({
     },
     cambiarPerspectiva(state, { payload }) {
       if (!PERSPECTIVAS[payload]) return;
+      state.sincCamara += 1;
       if (payload === 'blancas' || payload === 'negras') {
         // En la vista cenital, 1 y 2 sólo giran el tablero: se queda cenital.
         state.lado = payload;
@@ -149,6 +174,8 @@ const slice = createSlice({
       .addCase(rendirse.fulfilled, (state, { payload }) => {
         state.cargando = false;
         Object.assign(state, crearEstado(payload), { legales: [], seleccion: null });
+        state.promoverDe = null;
+        registrarPuntaje(state, payload);
       })
       .addCase(rendirse.rejected, registrarError);
   },

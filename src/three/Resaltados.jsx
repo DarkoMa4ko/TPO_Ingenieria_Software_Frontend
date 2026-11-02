@@ -180,12 +180,15 @@ function Resaltado({ casilla, tipo, paleta }) {
 
 export default function Resaltados({ seleccion, destinos, capturas, jaque, hover, estilo = 'oscuro' }) {
   const paleta = PALETAS[estilo] ? estilo : 'oscuro';
+  // Destinos únicos: con la promoción hay 4 movimientos legales hacia la misma
+  // casilla y sin el Set la key se repetiría (React: "two children with the same key").
+  const casillas = useMemo(() => [...new Set(destinos)], [destinos]);
   return (
     <group>
       {hover && hover !== seleccion && <Resaltado key={`h-${hover}`} casilla={hover} tipo="hover" paleta={paleta} />}
       {seleccion && <Resaltado key={`s-${seleccion}`} casilla={seleccion} tipo="seleccion" paleta={paleta} />}
       {jaque && <Resaltado key={`j-${jaque}`} casilla={jaque} tipo="jaque" paleta={paleta} />}
-      {destinos.map((casilla) => (
+      {casillas.map((casilla) => (
         <Resaltado
           key={`d-${seleccion}-${casilla}`}
           casilla={casilla}

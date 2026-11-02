@@ -1,17 +1,13 @@
 import * as THREE from 'three';
 import { RECORTE_SOLIDO } from './holograma.js';
-import { DURACION_ONDA, ONDA } from './onda.js';
+import { ONDA } from './onda.js';
 
 // Tablero "Luz y vidrio": el tablero es una pantalla bajo el vidrio negro. Las
 // casillas claras son píxeles encendidos en blanco y las oscuras, la pantalla
 // apagada (el vidrio de la base).
 //
-// Pulso de captura (en todos los tableros): la onda de la mesa pasa por el
-// tablero y cada casilla clara late dos veces en rojo, rápido, cuando el frente
-// llega a su centro. En los otros tableros sólo se dibuja ese pulso encima.
-
-// Misma velocidad que el frente de la onda de la mesa (ver ondaGLSL en Mesa.jsx).
-const VELOCIDAD_ONDA = 7;
+// El pulso rojo de captura se eliminó: las casillas de la pantalla ya no
+// cambian de color con la onda, y para los otros tableros esta capa no dibuja.
 
 // Lo que hace que se lea como pantalla, compartido con los resaltados (que la
 // pantalla dibuja, sin sombras): subpíxeles RGB que se ven de cerca y una banda
@@ -69,17 +65,9 @@ const fragment = /* glsl */ `
     float borde = 0.5 - max(abs(q.x), abs(q.y));
     float casilla = smoothstep(0.0, fwidth(borde) * 1.5, borde);
 
-    // Pulso de captura: dos latidos rojos cortos desde que el frente de la onda
-    // pasa el centro de la casilla, y vuelve a su color.
+    // El pulso rojo por captura o mate se eliminó: las casillas mantienen
+    // su color durante todo el juego, sin parpadeos.
     float rojo = 0.0;
-    float t = uTiempo - uInicioOnda;
-    if (t >= 0.0 && t <= ${DURACION_ONDA.toFixed(1)}) {
-      vec2 centro = vec2(celda.x - 3.5, 3.5 - celda.y);
-      float s = t - length(centro - uOrigenOnda) / ${VELOCIDAD_ONDA.toFixed(1)};
-      float primero = smoothstep(0.0, 0.04, s) * (1.0 - smoothstep(0.12, 0.22, s));
-      float segundo = smoothstep(0.3, 0.34, s) * (1.0 - smoothstep(0.42, 0.56, s));
-      rojo = max(primero, segundo);
-    }
 
     #ifdef PANTALLA
       vec3 color = mix(uBlanco, uRojo, rojo) * mascaraPantalla(vXZ) * barridoPantalla(vXZ, uTiempo);
@@ -116,12 +104,14 @@ const crearMaterial = (pantalla) => new THREE.ShaderMaterial({
 });
 
 const MATERIAL_PANTALLA = crearMaterial(true);
+// Para los estilos no-luz la capa ya no dibuja nada (el shader descarta siempre).
 const MATERIAL_PULSO = crearMaterial(false);
 
 const GEOMETRIA = new THREE.PlaneGeometry(8, 8);
 GEOMETRIA.rotateX(-Math.PI / 2);
 
-// `pantalla`: el tablero de luz completo; si no, sólo el pulso rojo de captura.
+// `pantalla`: el tablero de luz completo; si no, un material sin visibilidad
+// (el pulso rojo se eliminó y para los estilos no-luz la capa no dibuja nada).
 export default function CasillasLuz({ pantalla = true }) {
   return (
     <mesh

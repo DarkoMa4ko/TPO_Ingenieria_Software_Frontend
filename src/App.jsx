@@ -11,7 +11,7 @@ import Franjas from './ui/Franjas.jsx';
 import AvisoJaque from './ui/AvisoJaque.jsx';
 import ModalPromocion from './ui/ModalPromocion.jsx';
 import ModalResultado from './ui/ModalResultado.jsx';
-import { alternarPanel, cambiarPerspectiva } from './store/partidaSlice.js';
+import { alternarPanel, cambiarPerspectiva, crearPartida } from './store/partidaSlice.js';
 import { PERSPECTIVAS } from './ui/perspectivas.js';
 import { esTablas } from './utils/resultado.js';
 
@@ -20,7 +20,7 @@ const ATAJOS_PERSPECTIVA = Object.fromEntries(
 );
 
 export default function App() {
-  const { id, finalizada, resultado, promoverDe, cinematica, panelOculto } = useSelector((s) => s.partida);
+  const { id, finalizada, resultado, promoverDe, cinematica, panelOculto, jugadores } = useSelector((s) => s.partida);
   const despachar = useDispatch();
   const [pantalla, setPantalla] = useState('inicio');
   const [resultadoOcultoPara, setResultadoOcultoPara] = useState(null);
@@ -111,6 +111,12 @@ export default function App() {
     salirAlInicio();
   }
 
+  // Nueva partida directa con los mismos jugadores, sin volver al menú.
+  function reiniciarPartida() {
+    despachar(crearPartida({ blanco: jugadores?.blanco || '', negro: jugadores?.negro || '' })).unwrap()
+      .then(() => { setResultadoOcultoPara(null); setPantalla('partida'); });
+  }
+
   const hud = useSalida(Boolean(enPartida));
   const verResultado = useSalida(Boolean(enPartida && resultadoVisible && id !== resultadoOcultoPara));
   const panel = useSalida(Boolean(seccion && introLista));
@@ -142,12 +148,12 @@ export default function App() {
 
       {hud.montado && <Hud saliendo={hud.saliendo} />}
       {panel.montado && (
-        <PanelLateral
-          seccion={seccion ?? ultimaSeccion.current}
-          saliendo={panel.saliendo}
-          retraso={entrandoAPartida && seccion === 'partida' ? 1.75 : 0}
-          onNueva={irAlMenu}
-        />
+      <PanelLateral
+        seccion={seccion ?? ultimaSeccion.current}
+        saliendo={panel.saliendo}
+        retraso={entrandoAPartida && seccion === 'partida' ? 1.75 : 0}
+        onNueva={reiniciarPartida}
+      />
       )}
       {!enPartida && introLista && (
         <Menu
@@ -163,7 +169,7 @@ export default function App() {
       <Franjas activa={Boolean(enPartida && cinematica)} texto={cinematica?.texto} sub={cinematica?.sub} tipo={cinematica?.tipo} />
       <ModalPromocion />
       {verResultado.montado && (
-        <ModalResultado onCerrar={cerrarResultado} onNueva={irAlMenu} saliendo={verResultado.saliendo} />
+        <ModalResultado onCerrar={cerrarResultado} onNueva={reiniciarPartida} saliendo={verResultado.saliendo} />
       )}
       <Cargador onFin={() => setIntroLista(true)} />
     </div>

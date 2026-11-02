@@ -299,7 +299,7 @@ const Iluminacion = memo(function Iluminacion({ calidad }) {
 function Escena({ modo, enfoque, panelAbierto }) {
   const {
     id, fen: fenPartida, fenInicial, jugadas, finalizada, resultado, enJaque, cargando, legales, seleccion,
-    promoverDe, perspectiva, lado, turno, jugadores,
+    promoverDe, perspectiva, lado, turno, jugadores, sincCamara,
   } = useSelector((s) => s.partida);
   const ajustes = useSelector((s) => s.ajustes);
   // Siempre con todos los efectos.
@@ -321,7 +321,12 @@ function Escena({ modo, enfoque, panelAbierto }) {
   const contadorImpactos = useRef(0);
 
   const piezas = useMemo(() => parseFen(fen), [fen]);
-  const reyEnJaque = useMemo(() => (enMenu ? null : casillaReyEnJaque(fen, enJaque)), [fen, enJaque, enMenu]);
+  // El halo rojo del rey en jaque no corresponde al mate: en jaque mate no hay
+  // círculo, queda el latido rojo del tablero como única señal.
+  const reyEnJaque = useMemo(
+    () => (enMenu || finalizada ? null : casillaReyEnJaque(fen, enJaque)),
+    [fen, enJaque, enMenu, finalizada],
+  );
   const destinos = useMemo(
     () => (seleccion && !enMenu ? legales.filter((m) => m.desde === seleccion) : []),
     [seleccion, legales, enMenu],
@@ -384,15 +389,8 @@ function Escena({ modo, enfoque, panelAbierto }) {
         anunciarJugada({ capturada, movimientos, jugada: ultimaJugada, jaque: enJaque, finalizada, jugadores });
         pendientes.current = movimientos.length + (capturada ? 1 : 0);
         setAnimacion({ movimientos, capturada, clave: `${id}-${jugadas.length}`, jaque: enJaque, finalizada, resultado });
-        if (capturada) {
-          const { x, z } = casillaOffset(capturada.casilla);
-          setCinematica({ tipo: 'captura', foco: [x, 0.45, z], clave: `${id}-${jugadas.length}` });
-          despachar(fijarCinematica({
-            tipo: 'captura',
-            texto: `${NOMBRES[capturada.atacante]} captura ${NOMBRES[capturada.tipo].toLowerCase()}`,
-            sub: nombreJugador(jugadores, movimientos[0].blanco),
-          }));
-        }
+        // Sin cinemática de captura: la onda impacta y la pieza caída se retira,
+        // pero la cámara sigue viendo la partida normalmente.
       }
     } else if (!mismaPartida || jugadas.length < previo.cantidad) {
       setAnimacion(null);
@@ -438,7 +436,6 @@ function Escena({ modo, enfoque, panelAbierto }) {
   function alGolpear(posicion) {
     agregarImpacto(posicion, 1);
     dispararOnda(posicion[0], posicion[2]);
-    camaraLenta(reloj, 0.28, 0.75);
   }
 
   const bloqueado = enMenu || !id || finalizada || cargando || promoverDe || animacion || cinematicaActiva;
@@ -585,6 +582,7 @@ function Escena({ modo, enfoque, panelAbierto }) {
         panelVisible={panelAbierto}
         perspectiva={perspectiva}
         lado={lado}
+        sincCamara={sincCamara}
         cinematica={cinematica}
         controlesRef={controlesRef}
         enfoque={enfoque}

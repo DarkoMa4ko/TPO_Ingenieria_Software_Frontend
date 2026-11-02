@@ -462,7 +462,7 @@ kbd {
 
 .marcador.jaque { box-shadow: var(--vidrio-sombra), inset 0 0 0 1px rgba(255, 110, 90, 0.45), 0 0 26px rgba(255, 74, 54, 0.2); }
 
-.marcador-jugador { position: relative; display: flex; align-items: center; gap: 12px; min-width: 0; }
+.marcador-jugador { position: relative; display: flex; align-items: center; gap: 16px; min-width: 0; }
 .marcador-jugador.negro { flex-direction: row-reverse; text-align: right; }
 
 /* Turno: la mitad de quien juega se ilumina en verde desde el medallón (la cápsula
@@ -508,7 +508,7 @@ kbd {
 .marcador-medallon.blanco { background: radial-gradient(circle at 35% 30%, #ffffff, #d2d2d7 70%, #a1a1a6); color: #111113; box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35); }
 .marcador-medallon.negro { background: radial-gradient(circle at 35% 30%, #2e2e33, #0c0c0e 70%); color: var(--laton-claro); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3) inset, 0 3px 10px rgba(0, 0, 0, 0.35); }
 
-.marcador-datos { display: grid; gap: 2px; min-width: 0; flex: 1; }
+.marcador-datos { display: grid; gap: 2px; min-width: 0; flex: 1; padding: 0 5px; }
 
 .marcador-nombre {
   font-size: 15.5px;
@@ -1215,3 +1215,5 @@ kbd {
   .resultado-botones { grid-template-columns: 1fr; }
   .modal, .resultado-dialogo { padding: 26px 20px; }
 }
+
+.resultado-separador{opacity:.55;margin:0 3px}
