@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RECORTE_SOLIDO } from './holograma.js';
-import { ONDA } from './onda.js';
+import { DURACION_ONDA, ONDA } from './onda.js';
 
 // Tablero "Luz y vidrio": el tablero es una pantalla bajo el vidrio negro. Las
 // casillas claras son píxeles encendidos en blanco y las oscuras, la pantalla
