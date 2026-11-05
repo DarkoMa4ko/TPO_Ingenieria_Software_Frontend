@@ -37,6 +37,7 @@ import Lago, { NIVEL_AGUA, NIVEL_CASCADA } from './Lago.jsx';
 import Fuegos from './Fuegos.jsx';
 import { COLORES, anunciar } from './CartelAnuncios.jsx';
 import Resaltados from './Resaltados.jsx';
+import { fijarPulsoCasillas } from './CasillasLuz.jsx';
 import Impactos from './Impactos.jsx';
 import DirectorCamara from './DirectorCamara.jsx';
 import Efectos from './Efectos.jsx';
@@ -302,6 +303,10 @@ function Escena({ modo, enfoque, panelAbierto }) {
     promoverDe, perspectiva, lado, turno, jugadores, sincCamara,
   } = useSelector((s) => s.partida);
   const ajustes = useSelector((s) => s.ajustes);
+  // Los callbacks de la escena leen los ajustes por referencia para no obligar a
+  // re-memoizar componentes pesados cada vez que se prende o apaga un interruptor.
+  const ajustesRef = useRef(ajustes);
+  ajustesRef.current = ajustes;
   // Siempre con todos los efectos.
   const calidad = 'alta';
   const despachar = useDispatch();
@@ -389,8 +394,17 @@ function Escena({ modo, enfoque, panelAbierto }) {
         anunciarJugada({ capturada, movimientos, jugada: ultimaJugada, jaque: enJaque, finalizada, jugadores });
         pendientes.current = movimientos.length + (capturada ? 1 : 0);
         setAnimacion({ movimientos, capturada, clave: `${id}-${jugadas.length}`, jaque: enJaque, finalizada, resultado });
-        // Sin cinemática de captura: la onda impacta y la pieza caída se retira,
-        // pero la cámara sigue viendo la partida normalmente.
+        // Cinemática de captura (opcional en Ajustes): la cámara se acerca por
+        // un momento al impacto y después vuelve a la toma de juego.
+        if (capturada && ajustesRef.current.cinematicaCaptura) {
+          const { x, z } = casillaOffset(capturada.casilla);
+          setCinematica({ tipo: 'captura', foco: [x, 0.45, z], clave: `${id}-${jugadas.length}` });
+          despachar(fijarCinematica({
+            tipo: 'captura',
+            texto: `${NOMBRES[capturada.atacante]} captura ${NOMBRES[capturada.tipo].toLowerCase()}`,
+            sub: nombreJugador(jugadores, movimientos[0].blanco),
+          }));
+        }
       }
     } else if (!mismaPartida || jugadas.length < previo.cantidad) {
       setAnimacion(null);
@@ -432,11 +446,23 @@ function Escena({ modo, enfoque, panelAbierto }) {
   }
 
   // Contacto entre atacante y víctima: la única onda del tablero sale acá;
-  // los movimientos sin captura no dejan onda.
+  // los movimientos sin captura no dejan onda. El interruptor de Ajustes apaga
+  // el anillo de impacto y las casillas titilando (la onda de mesa/LED sigue).
   function alGolpear(posicion) {
-    agregarImpacto(posicion, 1);
-    dispararOnda(posicion[0], posicion[2]);
+    if (ajustesRef.current.efectosCaptura) {
+      agregarImpacto(posicion, 1);
+      dispararOnda(posicion[0], posicion[2]);
+    }
+    if (ajustesRef.current.cinematicaCaptura) {
+      camaraLenta(reloj, 0.28, 0.75);
+    }
   }
+
+  // El interruptor de "Efectos de captura" maneja el latido rojo del tablero de luz.
+  useEffect(() => {
+    fijarPulsoCasillas(Boolean(ajustes.efectosCaptura));
+    return () => fijarPulsoCasillas(false);
+  }, [ajustes.efectosCaptura]);
 
   const bloqueado = enMenu || !id || finalizada || cargando || promoverDe || animacion || cinematicaActiva;
   // Festejo (fuegos artificiales y LEDs con el degradé): desde que termina la

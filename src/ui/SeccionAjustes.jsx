@@ -1,6 +1,7 @@
 import { useDispatch, useSelector } from 'react-redux';
-import { OPCIONES, cambiarAjuste } from '../store/ajustesSlice.js';
+import { OPCIONES, cambiarAjuste, alternarAjuste } from '../store/ajustesSlice.js';
 import Desplazable from './Desplazable.jsx';
+import Interruptor from './Interruptor.jsx';
 
 // lista: una opción por fila, con la vista previa a la izquierda.
 const SECCIONES = [
@@ -50,6 +51,25 @@ export default function SeccionAjustes() {
           </div>
         </section>
       ))}
+
+      {/* Efectos opcionales de la captura, bajo la sección de Mesa. */}
+      <section className="ajustes-seccion">
+        <h3>Capturas</h3>
+        <div className="ajustes-opciones en-lista ajustes-interruptores">
+          <Interruptor
+            encendido={ajustes.cinematicaCaptura}
+            onAlternar={() => despachar(alternarAjuste('cinematicaCaptura'))}
+            etiqueta="Cinemática de captura"
+            detalle="La cámara se acerca al impacto y vuelve"
+          />
+          <Interruptor
+            encendido={ajustes.efectosCaptura}
+            onAlternar={() => despachar(alternarAjuste('efectosCaptura'))}
+            etiqueta="Efectos de captura"
+            detalle="Onda al impacto y casillas titilando en rojo"
+          />
+        </div>
+      </section>
     </Desplazable>
   );
 }

@@ -1217,3 +1217,60 @@ kbd {
 }
 
 .resultado-separador{opacity:.55;margin:0 3px}
+
+/* Interruptores de Ajustes (cinemática y efectos de captura): derecha,
+   misma familia visual que las tarjetas .ajuste. */
+.ajustes-interruptores { gap: 8px; }
+
+.ajuste-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 10px;
+  text-align: left;
+  border-radius: 14px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.035);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+  transition: background 0.25s, box-shadow 0.25s;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+.ajuste-fila:hover { background: rgba(255, 255, 255, 0.06); }
+.ajuste-fila.apagado .ajuste-fila-texto strong,
+.ajuste-fila.apagado .ajuste-fila-texto small { color: rgba(243, 238, 229, 0.55); }
+
+.ajuste-fila-texto { display: grid; gap: 2px; min-width: 0; }
+.ajuste-fila-texto strong { font-size: 12.5px; }
+.ajuste-fila-texto small { font-size: 10px; color: rgba(243, 238, 229, 0.65); }
+
+.interruptor {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 23px;
+  border-radius: 23px;
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  transition: background 0.25s, box-shadow 0.25s;
+}
+.interruptor-perilla {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f6f2e9, #cfc7b6);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  transform: translateX(0);
+  transition: transform 0.22s var(--ease), background 0.22s;
+}
+.ajuste-fila.prendido .interruptor {
+  background: rgba(90, 225, 140, 0.3);
+  box-shadow: inset 0 0 0 1px rgba(120, 235, 160, 0.5);
+}
+.ajuste-fila.prendido .interruptor-perilla { transform: translateX(17px); background: linear-gradient(180deg, #ffffff, #dfe8dd); }

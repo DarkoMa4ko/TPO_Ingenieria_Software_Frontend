@@ -46,11 +46,12 @@ const vertex = /* glsl */ `
 
 const fragment = /* glsl */ `
   #include <clipping_planes_pars_fragment>
-  uniform float uTiempo;
-  uniform float uInicioOnda;
-  uniform vec2 uOrigenOnda;
-  uniform vec3 uBlanco;
-  uniform vec3 uRojo;
+uniform float uTiempo;
+uniform float uInicioOnda;
+uniform vec2 uOrigenOnda;
+uniform float uPulsoCasillas;
+uniform vec3 uBlanco;
+uniform vec3 uRojo;
   varying vec2 vXZ;
   ${PANTALLA_GLSL}
 
@@ -65,9 +66,20 @@ const fragment = /* glsl */ `
     float borde = 0.5 - max(abs(q.x), abs(q.y));
     float casilla = smoothstep(0.0, fwidth(borde) * 1.5, borde);
 
-    // El pulso rojo por captura o mate se eliminó: las casillas mantienen
-    // su color durante todo el juego, sin parpadeos.
+    // Pulso de captura: dos latidos rojos cortos desde que el frente de la onda
+    // pasa el centro de la casilla (misma velocidad del frente en la mesa, 7 u/s).
+    // El interruptor de "Efectos de captura" lo apaga con uPulsoCasillas = 0.
     float rojo = 0.0;
+    if (uPulsoCasillas > 0.5) {
+      float t = uTiempo - uInicioOnda;
+      if (t >= 0.0 && t <= ${DURACION_ONDA.toFixed(1)}) {
+        vec2 centro = vec2(celda.x - 3.5, 3.5 - celda.y);
+        float s = t - length(centro - uOrigenOnda) / 7.0;
+        float primero = smoothstep(0.0, 0.04, s) * (1.0 - smoothstep(0.12, 0.22, s));
+        float segundo = smoothstep(0.3, 0.34, s) * (1.0 - smoothstep(0.42, 0.56, s));
+        rojo = max(primero, segundo);
+      }
+    }
 
     #ifdef PANTALLA
       vec3 color = mix(uBlanco, uRojo, rojo) * mascaraPantalla(vXZ) * barridoPantalla(vXZ, uTiempo);
@@ -80,12 +92,18 @@ const fragment = /* glsl */ `
   }
 `;
 
+// Banda fuerte del latido de casillas, compartida por los dos materiales del
+// tablero (la misma entrada de uniform, así un cambio alcanza a ambos estilos).
+// Por defecto prende; Ajustes la apaga con fijarPulsoCasillas(false).
+const PULSO_CASILLAS = { uPulsoCasillas: { value: 1 } };
+
 const crearMaterial = (pantalla) => new THREE.ShaderMaterial({
   vertexShader: vertex,
   fragmentShader: fragment,
   defines: pantalla ? { PANTALLA: '' } : {},
   uniforms: {
     ...ONDA,
+    ...PULSO_CASILLAS,
     // Blanco apenas frío, un poco sobre el umbral del bloom: un halo corto lo
     // hace leer como luz sin velar el tablero.
     uBlanco: { value: new THREE.Color('#eef4ff').multiplyScalar(1.6) },
@@ -122,4 +140,9 @@ export default function CasillasLuz({ pantalla = true }) {
       raycast={() => null}
     />
   );
+}
+
+// Prende o apaga el latido rojo de las casillas (interruptor de Ajustes).
+export function fijarPulsoCasillas(activo) {
+  PULSO_CASILLAS.uPulsoCasillas.value = activo ? 1 : 0;
 }

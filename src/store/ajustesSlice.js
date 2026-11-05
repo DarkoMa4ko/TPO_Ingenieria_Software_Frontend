@@ -15,8 +15,12 @@ export const OPCIONES = {
   ],
 };
 
-const PREDETERMINADOS = { tablero: 'oscuro', mesa: 'hielo' };
+const PREDETERMINADOS = { tablero: 'oscuro', mesa: 'hielo', cinematicaCaptura: true, efectosCaptura: true };
 const CLAVE = 'ajedrez-ajustes';
+
+// Interruptores (encendido/apagado): no son opciones de una lista, son banderas
+// booleanas que vale con alternar. Cinemática de captura y efectos de captura.
+const INTERRUPTORES = ['cinematicaCaptura', 'efectosCaptura'];
 
 function leer() {
   try {
@@ -24,7 +28,8 @@ function leer() {
     // El jardín de antes ya no existe: el nuevo es el pozo de ladrillo.
     if (guardado.mesa === 'jardin') guardado.mesa = 'ladrillo';
     const valido = Object.fromEntries(
-      Object.entries(guardado).filter(([k, v]) => OPCIONES[k]?.some((o) => o.valor === v)),
+      Object.entries(guardado).filter(([k, v]) =>
+        INTERRUPTORES.includes(k) ? typeof v === 'boolean' : OPCIONES[k]?.some((o) => o.valor === v)),
     );
     return { ...PREDETERMINADOS, ...valido };
   } catch {
@@ -43,8 +48,17 @@ const slice = createSlice({
         localStorage.setItem(CLAVE, JSON.stringify({ ...state }));
       } catch { /* sin almacenamiento: vale sólo para esta sesión */ }
     },
+    // Interruptores (con interruptora true/false): apagar o prender la cinemática
+    // y los efectos de captura.
+    alternarAjuste(state, { payload: clave }) {
+      if (!INTERRUPTORES.includes(clave)) return;
+      state[clave] = !state[clave];
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify({ ...state }));
+      } catch { /* sin almacenamiento: vale sólo para esta sesión */ }
+    },
   },
 });
 
-export const { cambiarAjuste } = slice.actions;
+export const { cambiarAjuste, alternarAjuste } = slice.actions;
 export default slice.reducer;
