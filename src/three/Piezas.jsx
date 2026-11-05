@@ -1,78 +1,69 @@
-import { useMemo } from 'react';
-import * as THREE from 'three';
-import { geometriaDe, ALTURAS } from './geometrias.js';
+import { useRef } from 'react';
+import { useFrame } from '@react-three/fiber';
+import { MATERIAL_LATON, useRecursosPiezas } from './materiales.js';
+import { MATERIAL_HOLO_INTRO } from './holograma.js';
+import { useReloj } from './Reloj.jsx';
 
-const MATERIALES = {
-  blanco: new THREE.MeshStandardMaterial({ color: '#f5e4c8', roughness: 0.35, metalness: 0.05 }),
-  negro: new THREE.MeshStandardMaterial({ color: '#33312e', roughness: 0.4, metalness: 0.1 }),
-  detalle: new THREE.MeshStandardMaterial({ color: '#8a1f1f', roughness: 0.4 }),
-};
-
-function Cuerpo({ tipo, blanco }) {
-  const geometria = useMemo(() => geometriaDe(tipo), [tipo]);
-  const material = blanco ? MATERIALES.blanco : MATERIALES.negro;
-  return (
-    <>
-      <mesh geometry={geometria} material={material} castShadow receiveShadow />
-      {tipo === 'b' && (
-        <mesh material={MATERIALES.detalle} position={[0, ALTURAS.b - 0.06, 0]}>
-          <sphereGeometry args={[0.045, 12, 12]} />
-        </mesh>
-      )}
-      {tipo === 'q' && (
-        <mesh material={material} position={[0, ALTURAS.q - 0.02, 0]}>
-          <sphereGeometry args={[0.09, 12, 12]} />
-        </mesh>
-      )}
-      {tipo === 'k' && <Cruz material={material} altura={ALTURAS.k} />}
-    </>
-  );
+// Los caballos miran hacia el rival y el rey queda con la cruz de frente a los
+// jugadores (girado al azar se veía torcida). El resto se gira al azar, de forma
+// estable por casilla, para que las vetas del mármol no se repitan.
+export function giroDe(tipo, blanco, semilla = '') {
+  if (tipo === 'n') return blanco ? Math.PI : 0;
+  if (tipo === 'k') return 0;
+  let h = 0;
+  for (const caracter of semilla) h = (h * 31 + caracter.charCodeAt(0)) % 997;
+  return (h / 997) * Math.PI * 2;
 }
 
-function Cruz({ material, altura }) {
+const sinRayos = () => null;
+
+/**
+ * `materiales` permite reemplazar los materiales (lo usa la pieza capturada para
+ * su propio recorte holográfico): { cuerpo, cruz, holo }.
+ */
+export function PiezaModelo({ tipo, blanco, sombras = true, semilla = '', materiales: propios = null }) {
+  const { geometrias, materiales } = useRecursosPiezas();
+  const geometria = geometrias[tipo];
+  const cuerpo = propios?.cuerpo ?? materiales[`${tipo}${blanco ? 'b' : 'n'}`];
+  const cruz = propios?.cruz ?? MATERIAL_LATON;
+  const holo = propios?.holo ?? MATERIAL_HOLO_INTRO;
+
   return (
-    <group position={[0, altura + 0.08, 0]}>
-      <mesh material={material} castShadow position={[0, 0.05, 0]}>
-        <boxGeometry args={[0.05, 0.24, 0.05]} />
-      </mesh>
-      <mesh material={material} castShadow position={[0, 0.09, 0]}>
-        <boxGeometry args={[0.18, 0.05, 0.05]} />
-      </mesh>
+    <group rotation={[0, giroDe(tipo, blanco, semilla), 0]}>
+      <mesh geometry={geometria.cuerpo} material={cuerpo} castShadow={sombras} receiveShadow={sombras} />
+      {geometria.cruz && <mesh geometry={geometria.cruz} material={cruz} castShadow={sombras} />}
+      <lineSegments geometry={geometria.aristas} material={holo} raycast={sinRayos} />
+      {geometria.aristasCruz && <lineSegments geometry={geometria.aristasCruz} material={holo} raycast={sinRayos} />}
     </group>
   );
 }
 
-function CabezaCaballo({ blanco, altura }) {
-  const material = blanco ? MATERIALES.blanco : MATERIALES.negro;
-  return (
-    <group position={[0, altura - 0.04, 0]}>
-      <mesh material={material} castShadow position={[0.06, 0.22, 0]}>
-        <boxGeometry args={[0.16, 0.5, 0.26]} />
-      </mesh>
-      <mesh material={material} castShadow position={[0.2, 0.36, 0]}>
-        <boxGeometry args={[0.12, 0.3, 0.24]} />
-      </mesh>
-      <mesh material={material} castShadow position={[-0.02, 0.12, 0]} rotation={[0, 0, -0.9]}>
-        <boxGeometry args={[0.3, 0.1, 0.22]} />
-      </mesh>
-    </group>
-  );
-}
-
-export default function Pieza({ pieza }) {
+export default function Pieza({ pieza, seleccionada, resaltada, onClick, onHover }) {
+  const ref = useRef(null);
+  const reloj = useReloj();
+  const elevacion = useRef(0);
   const x = pieza.file - 3.5;
   const z = 3.5 - pieza.rank;
-  if (pieza.tipo === 'n') {
-    return (
-      <group position={[x, 0, z]}>
-        <Cuerpo tipo="n" blanco={pieza.blanco} />
-        <CabezaCaballo blanco={pieza.blanco} altura={ALTURAS.n} />
-      </group>
-    );
-  }
+
+  useFrame((_, delta) => {
+    const grupo = ref.current;
+    if (!grupo) return;
+    const objetivo = seleccionada ? 0.22 : resaltada ? 0.05 : 0;
+    elevacion.current += (objetivo - elevacion.current) * Math.min(1, delta * 12);
+    grupo.position.y = 0.002 + elevacion.current;
+    // Balanceo muy leve mientras está seleccionada.
+    grupo.rotation.z = seleccionada ? Math.sin(reloj.current.t * 3.2) * 0.025 : grupo.rotation.z * 0.85;
+  }, -1);
+
   return (
-    <group position={[x, 0, z]}>
-      <Cuerpo tipo={pieza.tipo} blanco={pieza.blanco} />
+    <group
+      ref={ref}
+      position={[x, 0.002, z]}
+      onPointerDown={onClick && ((evento) => { evento.stopPropagation(); onClick(pieza.casilla); })}
+      onPointerOver={onHover && ((evento) => { evento.stopPropagation(); onHover(pieza.casilla); })}
+      onPointerOut={onHover && (() => onHover(null))}
+    >
+      <PiezaModelo tipo={pieza.tipo} blanco={pieza.blanco} semilla={pieza.casilla} />
     </group>
   );
 }

@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import store from './store/store.js';
 import App from './App.jsx';
+import '@fontsource/noto-sans-symbols-2';
 import './index.css';
 
 createRoot(document.getElementById('root')).render(

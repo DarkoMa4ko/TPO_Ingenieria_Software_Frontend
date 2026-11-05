@@ -1,124 +1,177 @@
 import { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import EscenaAjedrez from './three/EscenaAjedrez.jsx';
-import PanelPartida from './ui/PanelPartida.jsx';
-import Historial from './ui/Historial.jsx';
+import Menu from './ui/Menu.jsx';
+import Hud from './ui/Hud.jsx';
+import BarraSuperior from './ui/BarraSuperior.jsx';
+import Cargador from './ui/Cargador.jsx';
+import useSalida from './ui/useSalida.js';
+import PanelLateral from './ui/PanelLateral.jsx';
+import Franjas from './ui/Franjas.jsx';
+import AvisoJaque from './ui/AvisoJaque.jsx';
 import ModalPromocion from './ui/ModalPromocion.jsx';
 import ModalResultado from './ui/ModalResultado.jsx';
-import { crearPartida } from './store/partidaSlice.js';
-import { reproducirSonido } from './utils/sonidos.js';
-import { hayJaqueEnFen } from './utils/jaque.js';
-import './App.css';
+import { alternarPanel, cambiarPerspectiva, crearPartida } from './store/partidaSlice.js';
+import { PERSPECTIVAS } from './ui/perspectivas.js';
+import { esTablas } from './utils/resultado.js';
 
-// Cada JugadaResponse trae el FEN de la posicion resultante; contar piezas
-// permite detectar capturas sin depender de la notacion (que no marca 'x').
-function totalPiezas(fen) {
-  const tablero = fen.split(' ')[0];
-  return (tablero.match(/[a-zA-Z]/g) || []).length;
-}
+const ATAJOS_PERSPECTIVA = Object.fromEntries(
+  Object.entries(PERSPECTIVAS).map(([clave, { tecla }]) => [tecla, clave]),
+);
 
 export default function App() {
-  const { id, fen, jugadas, enJaque, finalizada, resultado, cargando, error, jugadores } = useSelector((s) => s.partida);
+  const { id, finalizada, resultado, promoverDe, cinematica, panelOculto, jugadores } = useSelector((s) => s.partida);
   const despachar = useDispatch();
   const [pantalla, setPantalla] = useState('inicio');
-  const [blanco, setBlanco] = useState('');
-  const [negro, setNegro] = useState('');
-  const [sonido, setSonido] = useState(() => localStorage.getItem('ajedrez-sonido') !== 'off');
-  const anterior = useRef({ id: null, cantidad: 0, finalizada: false });
   const [resultadoOcultoPara, setResultadoOcultoPara] = useState(null);
+  const [resultadoVisible, setResultadoVisible] = useState(false);
+  const [ajustesAbiertos, setAjustesAbiertos] = useState(false);
+  // La interfaz aparece cuando el cargador termina de revelar la escena.
+  const [introLista, setIntroLista] = useState(false);
+
+  const enPartida = pantalla === 'partida' && id;
+
+  // Un solo panel lateral, con la partida o los ajustes. El engranaje prende y
+  // apaga los ajustes (al apagarlos vuelve lo que había); el botón del panel
+  // muestra u oculta la partida, y si estaban los ajustes, cambia a la partida.
+  const seccion = ajustesAbiertos ? 'ajustes' : enPartida && !panelOculto ? 'partida' : null;
+  const alternarAjustes = () => setAjustesAbiertos((abiertos) => !abiertos);
+  const alternarSeccionPartida = () => {
+    if (!ajustesAbiertos) {
+      despachar(alternarPanel());
+      return;
+    }
+    setAjustesAbiertos(false);
+    if (panelOculto) despachar(alternarPanel());
+  };
+
+  // Escape cierra los ajustes (también en el inicio).
+  useEffect(() => {
+    if (!ajustesAbiertos || enPartida) return undefined;
+    const alPresionarTecla = (evento) => { if (evento.key === 'Escape') setAjustesAbiertos(false); };
+    window.addEventListener('keydown', alPresionarTecla);
+    return () => window.removeEventListener('keydown', alPresionarTecla);
+  }, [ajustesAbiertos, enPartida]);
 
   useEffect(() => {
-    const previo = anterior.current;
-    const esMismaPartida = Boolean(id && id === previo.id);
-    const hayJugadaNueva = esMismaPartida && jugadas.length > previo.cantidad;
-    const acabaDeFinalizar = esMismaPartida && finalizada && !previo.finalizada;
+    if (!enPartida || resultadoVisible || promoverDe) return undefined;
 
-    // Un solo sonido por actualización: mate > tablas/final > jaque > captura > movimiento.
-    if (hayJugadaNueva || acabaDeFinalizar) {
-      const ultima = jugadas[jugadas.length - 1];
-      const esTablas = /tabla|empate|ahogado|stalemate|draw/i.test(resultado || '');
-      const esMate = /jaque[\s-]*mate|checkmate|mate/i.test(resultado || '');
-      const esJaque = enJaque || hayJaqueEnFen(fen);
-      if (acabaDeFinalizar) {
-        reproducirSonido(esTablas ? 'tablas' : esMate ? 'jaqueMate' : 'final');
-      } else if (esJaque) {
-        reproducirSonido('jaque');
-      } else {
-        const previa = jugadas[jugadas.length - 2];
-        const fueCaptura = Boolean(previa && totalPiezas(previa.fen) > totalPiezas(ultima.fen));
-        reproducirSonido(fueCaptura ? 'captura' : 'mover');
+    const alPresionarTecla = (evento) => {
+      if (evento.ctrlKey || evento.metaKey || evento.altKey) return;
+      const objetivo = evento.target;
+      const etiqueta = objetivo?.tagName;
+      if (etiqueta === 'INPUT' || etiqueta === 'TEXTAREA' || etiqueta === 'SELECT' || objetivo?.isContentEditable) return;
+      if (evento.key === 'Escape') {
+        if (ajustesAbiertos) setAjustesAbiertos(false);
+        else salirAlInicio();
+        return;
       }
+      if (evento.key === 'p' || evento.key === 'P') {
+        evento.preventDefault();
+        alternarSeccionPartida();
+        return;
+      }
+      const destino = ATAJOS_PERSPECTIVA[evento.key];
+      if (!destino) return;
+      evento.preventDefault();
+      despachar(cambiarPerspectiva(destino));
+    };
+
+    window.addEventListener('keydown', alPresionarTecla);
+    return () => window.removeEventListener('keydown', alPresionarTecla);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enPartida, resultadoVisible, promoverDe, ajustesAbiertos, panelOculto, despachar]);
+
+  // El resultado aparece cuando termina la cinemática final (rey derribado).
+  // Las tablas no tienen cinemática; si algo falla, un tope de 9 s lo muestra igual.
+  const vioCinematicaFinal = useRef(null);
+  if (cinematica?.tipo === 'mate') vioCinematicaFinal.current = id;
+
+  useEffect(() => {
+    if (pantalla !== 'partida' || !finalizada || id === resultadoOcultoPara) {
+      setResultadoVisible(false);
+      return undefined;
     }
-    anterior.current = { id, cantidad: jugadas.length, finalizada };
-  }, [id, jugadas, enJaque, fen, finalizada, resultado]);
+    if (cinematica) return undefined;
+    const listo = esTablas(resultado) || vioCinematicaFinal.current === id;
+    const temporizador = setTimeout(() => setResultadoVisible(true), listo ? 900 : 9000);
+    return () => clearTimeout(temporizador);
+  }, [pantalla, finalizada, id, resultadoOcultoPara, cinematica, resultado]);
 
   const cerrarResultado = () => setResultadoOcultoPara(id);
 
-  // Reinicia con los mismos jugadores y sigue dentro de la partida, sin pasar por la pantalla de inicio.
+  // Salir al inicio cierra todo lo de la partida, ajustes incluidos.
+  function salirAlInicio() {
+    setAjustesAbiertos(false);
+    setPantalla('inicio');
+  }
+
+  function irAlMenu() {
+    setResultadoOcultoPara(id);
+    salirAlInicio();
+  }
+
+  // Nueva partida directa con los mismos jugadores, sin volver al menú.
   function reiniciarPartida() {
     despachar(crearPartida({ blanco: jugadores?.blanco || '', negro: jugadores?.negro || '' })).unwrap()
       .then(() => { setResultadoOcultoPara(null); setPantalla('partida'); });
   }
 
-  function nuevaPartida() {
-    setResultadoOcultoPara(null);
-    setPantalla('inicio');
-  }
-
-  function comenzar(e) {
-    e.preventDefault();
-    despachar(crearPartida({ blanco: blanco.trim(), negro: negro.trim() })).unwrap()
-      .then(() => { setResultadoOcultoPara(null); setPantalla('partida'); })
-      .catch(() => {});
-  }
-  function alternarSonido() {
-    localStorage.setItem('ajedrez-sonido', sonido ? 'off' : 'on');
-    setSonido(!sonido);
-  }
+  const hud = useSalida(Boolean(enPartida));
+  const verResultado = useSalida(Boolean(enPartida && resultadoVisible && id !== resultadoOcultoPara));
+  const panel = useSalida(Boolean(seccion && introLista));
+  // Mientras se va, el panel sigue mostrando la última sección.
+  const ultimaSeccion = useRef(seccion);
+  if (seccion) ultimaSeccion.current = seccion;
+  // Al entrar a la partida, el panel espera a que se arme el tablero; abierto con
+  // su botón, aparece enseguida.
+  const estabaEnPartida = useRef(false);
+  const entrandoAPartida = Boolean(enPartida) && !estabaEnPartida.current;
+  useEffect(() => { estabaEnPartida.current = Boolean(enPartida); });
 
   return (
-    <div className="app-shell">
-      <header className="barra-superior">
-        <div className="marca" onClick={() => setPantalla('inicio')} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && setPantalla('inicio')}>
-          <span className="marca-icono">♞</span><span>AJEDREZ <b>3D</b><small>INGENIERÍA DE SOFTWARE · UADE</small></span>
-        </div>
-        <div className="acciones-superiores">
-          <button className="boton-discreto" onClick={alternarSonido} aria-label={sonido ? 'Silenciar sonidos' : 'Activar sonidos'}>{sonido ? '♪ Sonido activado' : '♩ Sin sonido'}</button>
-          {id && <button className="boton-discreto" onClick={() => setPantalla(pantalla === 'partida' ? 'inicio' : 'partida')}>{pantalla === 'partida' ? '← Menú' : 'Continuar partida →'}</button>}
-        </div>
-      </header>
-      {pantalla === 'inicio' ? (
-        <main className="bienvenida">
-          <div className="bienvenida-contenido">
-            <div className="intro-label">♟ EL JUEGO DE ESTRATEGIA DEFINITIVO</div>
-            <h1>Una partida.<br /><em>Infinitas posibilidades.</em></h1>
-            <p>Desafiá a un amigo en una experiencia de ajedrez 3D. Pensá cada jugada, elegí tu perspectiva y disfrutá el juego.</p>
-            <form className="form-inicio" onSubmit={comenzar}>
-              <h2>Crear nueva partida</h2>
-              <div className="campos-jugadores">
-                <label><span>♔ Jugador de blancas</span><input value={blanco} onChange={e => setBlanco(e.target.value)} maxLength={60} placeholder="Nombre del jugador" /></label>
-                <label><span>♚ Jugador de negras</span><input value={negro} onChange={e => setNegro(e.target.value)} maxLength={60} placeholder="Nombre del jugador" /></label>
-              </div>
-              <button type="submit" className="principal grande" disabled={cargando}>{cargando ? 'Creando partida…' : 'Comenzar partida →'}</button>
-              {id && <button type="button" className="secundario" onClick={() => setPantalla('partida')}>Continuar partida actual</button>}
-              {error && <p className="error" role="alert">{error}</p>}
-            </form>
-          </div>
-          <div className="bienvenida-decoracion" aria-hidden="true"><span>♚</span><span>♞</span><span>♜</span></div>
-        </main>
-      ) : (
-        <main className="app">
-          <section className="escena" aria-label="Tablero de ajedrez 3D">{fen && <EscenaAjedrez />}</section>
-          <aside className="lateral">
-            <PanelPartida onNueva={nuevaPartida} />
-            {id && <Historial jugadas={jugadas} />}
-          </aside>
-        </main>
+    <div className={`app-shell ${enPartida ? 'modo-partida' : 'modo-menu'} ${enPartida && cinematica ? 'en-cinematica' : ''}`}>
+      <div className="lienzo" aria-label="Tablero de ajedrez 3D" role="img">
+        <EscenaAjedrez modo={enPartida ? 'juego' : 'menu'} panelAbierto={Boolean(seccion)} />
+      </div>
+      <div className="velo" aria-hidden="true" />
+
+      {introLista && (
+        <BarraSuperior
+          seccion={seccion}
+          onPanel={alternarSeccionPartida}
+          onAjustes={alternarAjustes}
+          enPartida={Boolean(enPartida)}
+          onMenu={salirAlInicio}
+        />
       )}
+
+      {hud.montado && <Hud saliendo={hud.saliendo} />}
+      {panel.montado && (
+      <PanelLateral
+        seccion={seccion ?? ultimaSeccion.current}
+        saliendo={panel.saliendo}
+        retraso={entrandoAPartida && seccion === 'partida' ? 1.75 : 0}
+        onNueva={reiniciarPartida}
+      />
+      )}
+      {!enPartida && introLista && (
+        <Menu
+          onComenzar={() => {
+            setResultadoOcultoPara(null);
+            setPantalla('partida');
+          }}
+          onContinuar={() => setPantalla('partida')}
+        />
+      )}
+
+      {enPartida && <AvisoJaque />}
+      <Franjas activa={Boolean(enPartida && cinematica)} texto={cinematica?.texto} sub={cinematica?.sub} tipo={cinematica?.tipo} />
       <ModalPromocion />
-      {pantalla === 'partida' && finalizada && id !== resultadoOcultoPara && (
-        <ModalResultado resultado={resultado} onCerrar={cerrarResultado} onNueva={reiniciarPartida} />
+      {verResultado.montado && (
+        <ModalResultado onCerrar={cerrarResultado} onNueva={reiniciarPartida} saliendo={verResultado.saliendo} />
       )}
+      <Cargador onFin={() => setIntroLista(true)} />
     </div>
   );
 }

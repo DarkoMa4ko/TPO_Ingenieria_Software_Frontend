@@ -31,6 +31,6 @@ export function casillaOffset(casilla) {
 
 export function casillaDeCoords(x, z) {
   const file = Math.round(x + 3.5);
-  const rank = 7 - Math.round(3.5 - z);
+  const rank = Math.round(3.5 - z);
   return COLUMNAS[file] + (rank + 1);
 }
