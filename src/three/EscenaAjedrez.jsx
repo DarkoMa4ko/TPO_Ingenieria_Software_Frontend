@@ -8,7 +8,7 @@ import {
   SoftShadows,
   Sparkles,
 } from '@react-three/drei';
-import { Canvas, useFrame } from '@react-three/fiber';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { parseFen, casillaOffset } from '../utils/fen.js';
 import { casillaReyEnJaque } from '../utils/jaque.js';
 import {
@@ -296,6 +296,17 @@ const Iluminacion = memo(function Iluminacion({ calidad }) {
     </>
   );
 });
+
+// Postproceso diferido hasta que la pantalla del lienzo ya mide su tamaño real.
+// Montar el EffectComposer con un canvas de 0×0 genera los warnings de WebGL
+// "Framebuffer is incomplete: Attachment has zero size" (targets recién creados
+// antes de la primera medición delResizeObserver). Guard dentro del Canvas:
+// por eso usa useThree y no propiedades del componente padre.
+function EfectosCuandoMedido({ enfoque, calidad }) {
+  const size = useThree((s) => s.size);
+  if (!size || size.width < 2 || size.height < 2) return null;
+  return <Efectos enfoque={enfoque} calidad={calidad} />;
+}
 
 function Escena({ modo, enfoque, panelAbierto }) {
   const {
@@ -618,7 +629,7 @@ function Escena({ modo, enfoque, panelAbierto }) {
         }}
       />
 
-      <Efectos enfoque={enfoque} calidad={calidad} />
+<EfectosCuandoMedido enfoque={enfoque} calidad={calidad} />
     </>
   );
 }
