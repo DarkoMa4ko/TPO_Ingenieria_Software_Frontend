@@ -15,13 +15,9 @@ let usandoDemo = DEMO_FORZADO;
 function activarDemo() {
   if (usandoDemo) return;
   usandoDemo = true;
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent('ajedrez:modo-demo'));
-  }
-}
-
-export function esModoDemo() {
-  return usandoDemo;
+  // Nota: entrar en modo demo es silencioso a propósito. Si más adelante se
+  // quiere avisar en la pantalla, escuchar 'ajedrez:modo-demo'... y restaurar
+  // el dispatch acá (el evento existió y se quitó porque nadie lo escuchaba).
 }
 
 function pareceBackendCaido(error) {
@@ -72,10 +68,12 @@ export function estado(id) {
   );
 }
 
-export function jugadasLegales(id, casilla = null) {
+// El backend también acepta el parámetro opcional ?casilla=: no se expone en el
+// puerto hasta que algún consumidor lo use (YAGNI; agregarlo es una línea).
+export function jugadasLegales(id) {
   return conRespaldo(
-    () => apiClient.get(`/api/partidas/${id}/jugadas`, { params: casilla ? { casilla } : {} }),
-    () => demo.jugadasLegales(id, casilla),
+    () => apiClient.get(`/api/partidas/${id}/jugadas`),
+    () => demo.jugadasLegales(id),
   );
 }
 

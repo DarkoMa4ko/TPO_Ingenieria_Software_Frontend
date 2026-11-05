@@ -95,7 +95,7 @@ export function estado(id) {
   });
 }
 
-export function jugadasLegales(id, casilla = null) {
+export function jugadasLegales(id) {
   const partida = obtener(id);
   if (partida.finalizada) {
     return Promise.resolve({ data: { turno: partida.posicion.turno, jugadas: [] } });

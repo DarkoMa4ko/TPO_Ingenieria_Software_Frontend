@@ -326,6 +326,14 @@ function Escena({ modo, enfoque, panelAbierto }) {
   const fen = fenPartida || FEN_INICIAL;
 
   const [animacion, setAnimacion] = useState(null);
+  // Dos estados de cinemática con vidas distintas, a propósito:
+  // - `cinematica` (local): la TOMA de cámara de la escena 3D (foco, duración,
+  //   fase). Vive y muere dentro del render 3D: nadie fuera la necesita.
+  // - `fijarCinematica()` (Redux): el TEXTO y la marca de "en cinemática" que
+  //   consumen Franjas y la clase raíz `en-cinematica` del shell de App.
+  // Nacen juntos (jugada con captura / mate) y mueren juntos, pero no son
+  // intercambiables: uno es geometría de cámara, el otro es señal de interfaz.
+  // Si un día se unifican, mover la señal a este componente y suscribir App.
   const [cinematica, setCinematica] = useState(null);
   const [cinematicaActiva, setCinematicaActiva] = useState(false);
   const [impactos, setImpactos] = useState([]);
